@@ -1,5 +1,5 @@
 import Head from "next/head";
-import { Container, Typography, Box } from "@mui/material";
+import { Container, Typography, Box, Button } from "@mui/material";
 import { useEffect, useState } from "react";
 import LatestPostCard from "~/components/LatestPostCard";
 import { api } from "~/utils/api";
@@ -12,10 +12,11 @@ export default function Home() {
     async function fetchGreeting() {
       try {
         const response = await fetch('/api/trpc/posts');
+        console.log(response);
         if (!response.ok) {
           throw new Error('Failed to fetch the latest post');
         }
-        const data = await response.json();
+        const data: { name?: string } = await response.json() as { name?: string };
         setGreetingPrisma(data?.name ?? "No name found");
       } catch (error) {
         console.error("Error fetching greeting from API: ", error);
@@ -25,6 +26,25 @@ export default function Home() {
 
     void fetchGreeting();
   }, []);
+
+  const handleCreatePost = async () => {
+    try {
+      const response = await fetch('/api/trpc/posts', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ name: 'New Post' }),
+      });
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Failed to create post: ${errorText}`);
+      }
+      window.location.reload();
+    } catch (error) {
+      console.error("Error creating new post: ", error);
+    }
+  };
 
   return (
     <>
@@ -45,6 +65,11 @@ export default function Home() {
         </Typography>
         <Box sx={{ mt: 4 }}>
           <LatestPostCard />
+        </Box>
+        <Box sx={{ mt: 4, textAlign: 'center' }}>
+          <Button variant="contained" color="primary" onClick={handleCreatePost}>
+            Create New Post
+          </Button>
         </Box>
       </Container>
     </>
