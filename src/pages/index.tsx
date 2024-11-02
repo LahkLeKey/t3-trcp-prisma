@@ -1,11 +1,31 @@
 import Head from "next/head";
 import Link from "next/link";
-
 import { api } from "~/utils/api";
 import styles from "./index.module.css";
+import { useEffect, useState } from "react";
+import LatestPostCard from "~/components/LatestPostCard";
 
 export default function Home() {
+  const [greetingPrisma, setGreetingPrisma] = useState("Loading data from Prisma...");
   const hello = api.post.hello.useQuery({ text: "from tRPC" });
+
+  useEffect(() => {
+    async function fetchGreeting() {
+      try {
+        const response = await fetch('/api/trpc/posts');
+        if (!response.ok) {
+          throw new Error('Failed to fetch the latest post');
+        }
+        const data: { name?: string } = await response.json();
+        setGreetingPrisma(data?.name ?? "No name found");
+      } catch (error) {
+        console.error("Error fetching greeting from API: ", error);
+        setGreetingPrisma("Error loading data");
+      }
+    }
+
+    void fetchGreeting();
+  }, []);
 
   return (
     <>
@@ -46,6 +66,10 @@ export default function Home() {
           <p className={styles.showcaseText}>
             {hello.data ? hello.data.greeting : "Loading tRPC query..."}
           </p>
+          <p className={styles.showcaseText}>{greetingPrisma}</p>
+          <div className={styles.cardRow}>
+            <LatestPostCard />
+          </div>
         </div>
       </main>
     </>
