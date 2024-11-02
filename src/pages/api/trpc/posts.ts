@@ -1,9 +1,30 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { PrismaClient } from '@prisma/client';
 
-const prisma = new PrismaClient({
-  log: ['query', 'info', 'warn', 'error'],
-});
+let prisma: PrismaClient;
+declare global {
+  // eslint-disable-next-line @typescript-eslint/no-namespace
+  namespace NodeJS {
+    interface Global {
+      prisma: PrismaClient | undefined;
+    }
+  }
+  // eslint-disable-next-line no-var
+  var prisma: PrismaClient | undefined;
+}
+
+if (typeof global !== 'undefined') {
+  if (!global.prisma) {
+    global.prisma = new PrismaClient({
+      log: ['query', 'info', 'warn', 'error'],
+    });
+  }
+  prisma = global.prisma;
+} else {
+  prisma = new PrismaClient({
+    log: ['query', 'info', 'warn', 'error'],
+  });
+}
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method === 'GET') {
